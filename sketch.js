@@ -82,10 +82,9 @@ function desenhaJogo() {
   noStroke();
 
   // DIFICULDADE PROGRESSIVA:
-  // Começa com 2000ms (2s) e vai baixando até 600ms (0.6s) à medida que ganhas pontos de CO2
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
 
-  // Gerar veículos com o intervalo dinâmico
+  // Gerar veículos
   if (millis() - tempoUltimoVeiculo > intervaloGeracao) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
@@ -112,10 +111,11 @@ function desenhaJogo() {
       }
     }
 
-    // Acumular pontos
+    // PONTUAÇÃO COM BOOST DA ONDA VERDE:
     if (v.removido) {
-      if (v.tipo === 'ECO-BUS') pontosCO2 += 50; 
-      if (v.tipo === 'BIKE') pontosCO2 += 20;    
+      let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; // Dobro dos pontos se a Onda Verde estiver ativa
+      if (v.tipo === 'ECO-BUS') pontosCO2 += 50 * multiplicador; 
+      if (v.tipo === 'BIKE') pontosCO2 += 20 * multiplicador;    
       veiculos.splice(i, 1);
     }
   }
