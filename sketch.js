@@ -4,10 +4,11 @@ let veiculos = [];
 let audioManager;
 let tempoUltimoVeiculo = 0;
 
-// Variáveis de Jogo / Métricas Ecológicas
-let pontosCO2 = 0;        // CO2 Evitado acumulado (g)
-let nivelPoluicao = 0;    // Poluição da Cidade (%)
+// Variáveis Ecológicas e de Estado
+let pontosCO2 = 0;
+let nivelPoluicao = 0;
 let maxPoluicao = 100;
+let motivoGameOver = ""; // Para mostrar se foi por Poluição ou Acidente
 
 function setup() {
   createCanvas(800, 600);
@@ -39,7 +40,6 @@ function draw() {
   desenhaRodape();
 }
 
-// --- ECRÃ 1: INÍCIO ---
 function desenhaInicio() {
   textAlign(CENTER, CENTER);
   fill(255);
@@ -64,7 +64,6 @@ function desenhaInicio() {
   }
 }
 
-// --- ECRÃ 2: JOGO ---
 function desenhaJogo() {
   audioManager.atualizar();
 
@@ -75,14 +74,14 @@ function desenhaJogo() {
   rect(width / 2, height / 2, width, 120);  
   rect(width / 2, height / 2, 120, height); 
 
-  // Linhas de trânsito
+  // Linhas
   stroke(255, 200, 0);
   strokeWeight(2);
   line(0, height / 2, width, height / 2);
   line(width / 2, 0, width / 2, height);
   noStroke();
 
-  // Gerar veículos a cada 1.8s
+  // Gerar veículos
   if (millis() - tempoUltimoVeiculo > 1800) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
@@ -92,45 +91,51 @@ function desenhaJogo() {
   // Atualizar e desenhar veículos
   for (let i = veiculos.length - 1; i >= 0; i--) {
     let v = veiculos[i];
-    v.atualizar(semaforos, audioManager.ondaVerdeAtiva);
+    v.atualizar(semaforos, veiculos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // Se um carro a combustão está parado no vermelho, aumenta a poluição
+    // Poluição aumenta com carros parados
     if (v.parado && v.tipo === 'CAR') {
       nivelPoluicao += 0.03;
     }
 
-    // Quando um veículo conclui a travessia e sai do ecrã
+    // Testar Colisões entre veículos de rotas diferentes (Acidentes)
+    for (let j = i - 1; j >= 0; j--) {
+      let outro = veiculos[j];
+      if (v.origem !== outro.origem && v.colideCom(outro)) {
+        motivoGameOver = "ACIDENTE NO CRUZAMENTO!";
+        estado = 2; // Fim de jogo por colisão
+      }
+    }
+
+    // Pontuação ao passar com sucesso
     if (v.removido) {
-      if (v.tipo === 'ECO-BUS') pontosCO2 += 50; // Autocarro evita 50g de CO2
-      if (v.tipo === 'BIKE') pontosCO2 += 20;    // Bicicleta evita 20g de CO2
+      if (v.tipo === 'ECO-BUS') pontosCO2 += 50; 
+      if (v.tipo === 'BIKE') pontosCO2 += 20;    
       veiculos.splice(i, 1);
     }
   }
 
-  // Desenhar semáforos
+  // Semáforos
   for (let s of semaforos) {
     s.desenhar();
   }
 
-  // Desenhar barras de Áudio e Estamina
+  // Interface
   audioManager.desenharBarras();
-
-  // Desenhar Painel de CO2 e Poluição
   desenhaPainelEcologico();
 
-  // Condição de Game Over por excesso de poluição
+  // Condição de Fim por Poluição
   if (nivelPoluicao >= maxPoluicao) {
+    motivoGameOver = "A CIDADE FICOU DEMASIADO POLUÍDA!";
     estado = 2;
   }
 }
 
-// --- PAINEL DE CO2 E POLUIÇÃO ---
 function desenhaPainelEcologico() {
   push();
   rectMode(CORNER);
   
-  // Painel de CO2 Evitado (Canto Superior Direito)
   fill(30, 200);
   rect(width - 220, 20, 200, 45, 6);
   fill(46, 204, 113);
@@ -138,11 +143,10 @@ function desenhaPainelEcologico() {
   textAlign(LEFT, CENTER);
   text("CO₂ Evitado: " + pontosCO2 + " g", width - 205, 42);
 
-  // Barra de Poluição
   fill(30);
   rect(width - 220, 75, 200, 15, 4);
   fill(231, 76, 60);
-  rect(width - 220, 75, map(nivelPoluicao, 0, maxPoluicao, 0, 200), 15, 4);
+  rect(width - 220, 75, map(nivelPoluicao, 0, maxPoluicao, 0, 200, true), 15, 4);
   
   fill(255);
   textSize(11);
@@ -151,7 +155,6 @@ function desenhaPainelEcologico() {
   pop();
 }
 
-// --- ECRÃ 3: FIM DE JOGO ---
 function desenhaFim() {
   textAlign(CENTER, CENTER);
   fill(230, 80, 80);
@@ -160,7 +163,7 @@ function desenhaFim() {
 
   fill(255);
   textSize(18);
-  text("A cidade ficou demasiado poluída!", width / 2, 230);
+  text(motivoGameOver, width / 2, 230);
   
   fill(46, 204, 113);
   textSize(22);
@@ -171,7 +174,6 @@ function desenhaFim() {
   text("Pressiona ENTER para Reiniciar", width / 2, 350);
 }
 
-// --- RODAPÉ FIXO ---
 function desenhaRodape() {
   fill(20);
   rectMode(CORNER);
@@ -208,6 +210,7 @@ function keyPressed() {
     pontosCO2 = 0;
     nivelPoluicao = 0;
   } else if (estado === 1 && (key === 'f' || key === 'F')) {
+    motivoGameOver = "SIMULAÇÃO ENCERRADA";
     estado = 2;
   } else if (estado === 2 && keyCode === ENTER) {
     estado = 0;
