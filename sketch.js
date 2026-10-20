@@ -81,7 +81,7 @@ function desenhaJogo() {
   line(width / 2, 0, width / 2, height);
   noStroke();
 
-  // DIFICULDADE PROGRESSIVA:
+  // DIFICULDADE PROGRESSIVA
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
 
   // Gerar veículos
@@ -97,7 +97,7 @@ function desenhaJogo() {
     v.atualizar(semaforos, veiculos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // Carros parados geram poluição
+    // APENAS carros a combustão parados geram poluição
     if (v.parado && v.tipo === 'CAR') {
       nivelPoluicao += 0.035;
     }
@@ -111,11 +111,14 @@ function desenhaJogo() {
       }
     }
 
-    // PONTUAÇÃO COM BOOST DA ONDA VERDE:
+    // PONTUAÇÃO PARA TODOS OS VEÍCULOS AO SAÍREM COM SUCESSO:
     if (v.removido) {
-      let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; // Dobro dos pontos se a Onda Verde estiver ativa
+      let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; 
+      
       if (v.tipo === 'ECO-BUS') pontosCO2 += 50 * multiplicador; 
-      if (v.tipo === 'BIKE') pontosCO2 += 20 * multiplicador;    
+      else if (v.tipo === 'BIKE') pontosCO2 += 20 * multiplicador;    
+      else if (v.tipo === 'CAR') pontosCO2 += 10 * multiplicador; // Todos os veículos dão pontos!
+      
       veiculos.splice(i, 1);
     }
   }
