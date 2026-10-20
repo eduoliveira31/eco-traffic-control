@@ -1,12 +1,12 @@
 let estado = 0; // 0 = Início, 1 = Jogo, 2 = Fim
 let semaforos = [];
+let veiculos = [];
+let tempoUltimoVeiculo = 0;
 
 function setup() {
   createCanvas(800, 600);
 
-  // Semáforos posicionados exatamente nos 4 cantos do cruzamento:
-  // Norte (entrada superior direita), Sul (entrada inferior esquerda),
-  // Este (entrada direita inferior), Oeste (entrada esquerda superior)
+  // Criar os 4 Semáforos
   semaforos.push(new Semaforo(325, 225, 'V')); // Norte
   semaforos.push(new Semaforo(475, 375, 'V')); // Sul
   semaforos.push(new Semaforo(475, 225, 'H')); // Este
@@ -57,7 +57,26 @@ function desenhaJogo() {
   line(width / 2, 0, width / 2, height);
   noStroke();
 
-  // Desenhar e atualizar os 4 semáforos
+  // Gerar um novo veículo a cada 2 segundos (2000 ms)
+  if (millis() - tempoUltimoVeiculo > 2000) {
+    let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
+    veiculos.push(new Veiculo(random(origens)));
+    tempoUltimoVeiculo = millis();
+  }
+
+  // Atualizar e desenhar veículos
+  for (let i = veiculos.length - 1; i >= 0; i--) {
+    let v = veiculos[i];
+    v.atualizar(semaforos);
+    v.desenhar();
+
+    // Remover veículos que já saíram do ecrã
+    if (v.removido) {
+      veiculos.splice(i, 1);
+    }
+  }
+
+  // Desenhar os 4 semáforos por cima dos veículos
   for (let s of semaforos) {
     s.desenhar();
   }
@@ -65,7 +84,7 @@ function desenhaJogo() {
   textAlign(CENTER, CENTER);
   fill(255);
   textSize(14);
-  text("Clica nos semáforos para mudar a cor! | Pressiona 'F' para Fim", width / 2, 40);
+  text("Clica nos semáforos para abrir/fechar a passagem! | Pressiona 'F' para Fim", width / 2, 40);
 }
 
 function desenhaFim() {
@@ -93,7 +112,6 @@ function desenhaRodape() {
   text("Eduardo Oliveira, 33137, ECGM", width - 15, height - 15);
 }
 
-// Detetar clique do rato nos semáforos durante o jogo
 function mousePressed() {
   if (estado === 1) {
     for (let s of semaforos) {
@@ -107,6 +125,7 @@ function mousePressed() {
 function keyPressed() {
   if (estado === 0 && keyCode === ENTER) {
     estado = 1;
+    veiculos = []; // Limpa veículos ao iniciar
   } else if (estado === 1 && (key === 'f' || key === 'F')) {
     estado = 2;
   } else if (estado === 2 && keyCode === ENTER) {
