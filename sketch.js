@@ -1,12 +1,15 @@
 let estado = 0; // 0 = Início, 1 = Jogo, 2 = Fim
 let semaforos = [];
 let veiculos = [];
+let audioManager;
 let tempoUltimoVeiculo = 0;
 
 function setup() {
   createCanvas(800, 600);
 
-  // Criar os 4 Semáforos
+  audioManager = new AudioManager();
+
+  // Semáforos
   semaforos.push(new Semaforo(325, 225, 'V')); // Norte
   semaforos.push(new Semaforo(475, 375, 'V')); // Sul
   semaforos.push(new Semaforo(475, 225, 'H')); // Este
@@ -37,18 +40,35 @@ function desenhaInicio() {
   textSize(32);
   text("ECO-TRAFFIC CONTROL", width / 2, 150);
   
-  textSize(16);
-  fill(180);
-  text("Pressiona ENTER para começar", width / 2, 300);
+  // Exibir estado da calibração
+  if (audioManager.mic && !audioManager.calibrado) {
+    audioManager.calibrar();
+    fill(241, 196, 15);
+    textSize(16);
+    text("A calibrar ruído ambiente... Por favor faça silêncio", width / 2, 280);
+  } else if (audioManager.calibrado) {
+    fill(46, 204, 113);
+    textSize(16);
+    text("Microfone Calibrado!", width / 2, 260);
+    fill(180);
+    text("Pressiona ENTER para começar", width / 2, 310);
+  } else {
+    textSize(16);
+    fill(180);
+    text("Clica no ecrã para ativar o Microfone", width / 2, 300);
+  }
 }
 
 function desenhaJogo() {
+  // Atualizar gestão de áudio
+  audioManager.atualizar();
+
   // Estradas
   rectMode(CENTER);
   fill(60);
   noStroke();
-  rect(width / 2, height / 2, width, 120);  // Horizontal
-  rect(width / 2, height / 2, 120, height); // Vertical
+  rect(width / 2, height / 2, width, 120);  
+  rect(width / 2, height / 2, 120, height); 
 
   // Linhas de trânsito
   stroke(255, 200, 0);
@@ -57,7 +77,7 @@ function desenhaJogo() {
   line(width / 2, 0, width / 2, height);
   noStroke();
 
-  // Gerar um novo veículo a cada 2 segundos (2000 ms)
+  // Gerar veículos
   if (millis() - tempoUltimoVeiculo > 2000) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
@@ -67,24 +87,21 @@ function desenhaJogo() {
   // Atualizar e desenhar veículos
   for (let i = veiculos.length - 1; i >= 0; i--) {
     let v = veiculos[i];
-    v.atualizar(semaforos);
+    v.atualizar(semaforos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // Remover veículos que já saíram do ecrã
     if (v.removido) {
       veiculos.splice(i, 1);
     }
   }
 
-  // Desenhar os 4 semáforos por cima dos veículos
+  // Desenhar semáforos
   for (let s of semaforos) {
     s.desenhar();
   }
 
-  textAlign(CENTER, CENTER);
-  fill(255);
-  textSize(14);
-  text("Clica nos semáforos para abrir/fechar a passagem! | Pressiona 'F' para Fim", width / 2, 40);
+  // Desenhar barras de MIC e STAMINA
+  audioManager.desenharBarras();
 }
 
 function desenhaFim() {
@@ -113,6 +130,12 @@ function desenhaRodape() {
 }
 
 function mousePressed() {
+  // Inicializa o microfone no primeiro clique do utilizador
+  if (!audioManager.mic) {
+    userStartAudio();
+    audioManager.inicializar();
+  }
+
   if (estado === 1) {
     for (let s of semaforos) {
       if (s.foiClicado(mouseX, mouseY)) {
@@ -123,9 +146,9 @@ function mousePressed() {
 }
 
 function keyPressed() {
-  if (estado === 0 && keyCode === ENTER) {
+  if (estado === 0 && keyCode === ENTER && audioManager.calibrado) {
     estado = 1;
-    veiculos = []; // Limpa veículos ao iniciar
+    veiculos = [];
   } else if (estado === 1 && (key === 'f' || key === 'F')) {
     estado = 2;
   } else if (estado === 2 && keyCode === ENTER) {
