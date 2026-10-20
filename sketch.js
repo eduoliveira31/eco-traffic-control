@@ -4,11 +4,11 @@ let veiculos = [];
 let audioManager;
 let tempoUltimoVeiculo = 0;
 
-// Variáveis Ecológicas e de Estado
+// Variáveis Ecológicas e Dificuldade
 let pontosCO2 = 0;
 let nivelPoluicao = 0;
 let maxPoluicao = 100;
-let motivoGameOver = ""; // Para mostrar se foi por Poluição ou Acidente
+let motivoGameOver = "";
 
 function setup() {
   createCanvas(800, 600);
@@ -81,8 +81,12 @@ function desenhaJogo() {
   line(width / 2, 0, width / 2, height);
   noStroke();
 
-  // Gerar veículos
-  if (millis() - tempoUltimoVeiculo > 1800) {
+  // DIFICULDADE PROGRESSIVA:
+  // Começa com 2000ms (2s) e vai baixando até 600ms (0.6s) à medida que ganhas pontos de CO2
+  let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
+
+  // Gerar veículos com o intervalo dinâmico
+  if (millis() - tempoUltimoVeiculo > intervaloGeracao) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
     tempoUltimoVeiculo = millis();
@@ -94,21 +98,21 @@ function desenhaJogo() {
     v.atualizar(semaforos, veiculos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // Poluição aumenta com carros parados
+    // Carros parados geram poluição
     if (v.parado && v.tipo === 'CAR') {
-      nivelPoluicao += 0.03;
+      nivelPoluicao += 0.035;
     }
 
-    // Testar Colisões entre veículos de rotas diferentes (Acidentes)
+    // Detetar Colisões (Acidentes)
     for (let j = i - 1; j >= 0; j--) {
       let outro = veiculos[j];
       if (v.origem !== outro.origem && v.colideCom(outro)) {
         motivoGameOver = "ACIDENTE NO CRUZAMENTO!";
-        estado = 2; // Fim de jogo por colisão
+        estado = 2;
       }
     }
 
-    // Pontuação ao passar com sucesso
+    // Acumular pontos
     if (v.removido) {
       if (v.tipo === 'ECO-BUS') pontosCO2 += 50; 
       if (v.tipo === 'BIKE') pontosCO2 += 20;    
@@ -125,7 +129,7 @@ function desenhaJogo() {
   audioManager.desenharBarras();
   desenhaPainelEcologico();
 
-  // Condição de Fim por Poluição
+  // Fim por Poluição
   if (nivelPoluicao >= maxPoluicao) {
     motivoGameOver = "A CIDADE FICOU DEMASIADO POLUÍDA!";
     estado = 2;

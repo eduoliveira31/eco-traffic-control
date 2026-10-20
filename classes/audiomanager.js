@@ -4,10 +4,11 @@ class AudioManager {
     this.calibrado = false;
     this.tempoCalibracao = 3000;
     this.inicioCalibracao = 0;
-    this.ruidoBase = 0.05;
+    this.ruidoBase = 0.001;
     
-    this.limiarMin = 0.15;
-    this.limiarMax = 0.35;
+    // Limiares ultra-sensíveis (dispara quase instantaneamente com sopro leve)
+    this.limiarMin = 0.008;
+    this.limiarMax = 0.015;
     
     this.ondaVerdeAtiva = false;
     this.stamina = 100;
@@ -22,13 +23,15 @@ class AudioManager {
 
   calibrar() {
     if (!this.mic) return;
+    
     let volAtual = this.mic.getLevel();
     let tempoDecorrido = millis() - this.inicioCalibracao;
 
     if (tempoDecorrido < this.tempoCalibracao) {
       this.ruidoBase = max(this.ruidoBase, volAtual);
-      this.limiarMin = this.ruidoBase + 0.10;
-      this.limiarMax = this.ruidoBase + 0.25;
+      // Sensibilidade máxima
+      this.limiarMin = this.ruidoBase + 0.005;
+      this.limiarMax = this.ruidoBase + 0.012;
     } else {
       this.calibrado = true;
     }
@@ -36,6 +39,7 @@ class AudioManager {
 
   atualizar() {
     if (!this.calibrado || !this.mic) return;
+
     let volume = this.mic.getLevel();
 
     if (volume > this.limiarMax && this.stamina > 0) {
@@ -45,10 +49,10 @@ class AudioManager {
     }
 
     if (this.ondaVerdeAtiva) {
-      this.stamina -= 0.6;
+      this.stamina -= 0.5;
       if (this.stamina < 0) this.stamina = 0;
     } else if (this.stamina < this.maxStamina) {
-      this.stamina += 0.3;
+      this.stamina += 0.4;
       if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
     }
   }
@@ -56,19 +60,19 @@ class AudioManager {
   desenharBarras() {
     push();
     rectMode(CORNER);
+    
     let vol = this.mic ? this.mic.getLevel() : 0;
     
-    // Barra de Microfone
     fill(30);
     rect(20, 40, 150, 15, 4);
-    fill(this.ondaVerdeAtiva ? color(46, 204, 113) : color(52, 152, 219));
-    rect(20, 40, map(vol, 0, 1, 0, 150), 15, 4);
     
-    // Limiares
+    fill(this.ondaVerdeAtiva ? color(46, 204, 113) : color(52, 152, 219));
+    rect(20, 40, map(vol, 0, 0.15, 0, 150, true), 15, 4);
+    
     stroke(231, 76, 60);
     strokeWeight(2);
-    let xMin = 20 + map(this.limiarMin, 0, 1, 0, 150);
-    let xMax = 20 + map(this.limiarMax, 0, 1, 0, 150);
+    let xMin = 20 + map(this.limiarMin, 0, 0.15, 0, 150, true);
+    let xMax = 20 + map(this.limiarMax, 0, 0.15, 0, 150, true);
     line(xMin, 38, xMin, 57);
     line(xMax, 38, xMax, 57);
     noStroke();
@@ -78,7 +82,6 @@ class AudioManager {
     textAlign(LEFT, BOTTOM);
     text("MIC: " + (this.ondaVerdeAtiva ? "ONDA VERDE!" : "Normal"), 20, 36);
 
-    // Barra de Estamina
     fill(30);
     rect(20, 75, 150, 15, 4);
     fill(241, 196, 15);
