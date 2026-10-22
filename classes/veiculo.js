@@ -42,7 +42,7 @@ class Veiculo {
 
     // CONTROLOS INDEPENDENTES
     let margemLargura = 0.5;      // Largura da caixa (evita bater nas faixas do lado)
-    let margemComprimento = 0.85;  // Comprimento da caixa (distância entre carros na mesma fila)
+    let margemComprimento = 1.05;  // Comprimento da caixa (distância entre carros na mesma fila)
     
     let largImg = (img && img.width > 0) ? (img.width * escala) * margemLargura : 20;
     let altImg = (img && img.height > 0) ? (img.height * escala) * margemComprimento : 40;
@@ -129,25 +129,13 @@ class Veiculo {
     rotate(this.rotacao);
 
     if (this.tipo === 'CAR') {
-      image(imgCarro, 0, 0, imgCarro.width * 0.12, imgCarro.height * 0.12);
+      image(imgCarro, 0, 0, imgCarro.width * 0.17, imgCarro.height * 0.17);
     } else if (this.tipo === 'ECO-BUS') {
-      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.12, imgAutocarro.height * 0.12);
+      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.16, imgAutocarro.height * 0.16);
     } else if (this.tipo === 'BIKE') {
       image(imgBicicleta, 0, 0, imgBicicleta.width * 0.08, imgBicicleta.height * 0.08);
     }
 
-    pop();
-
-    // ==========================================
-    // VER HITBOX (REMOVER OU COMENTAR NO FIM)
-    // ==========================================
-    push();
-    rectMode(CENTER);
-    noFill();
-    stroke(255, 0, 0); // Linha vermelha
-    strokeWeight(2);
-    let dim = this.getDimensoes();
-    rect(this.x, this.y, dim.w, dim.h);
     pop();
   }
 
