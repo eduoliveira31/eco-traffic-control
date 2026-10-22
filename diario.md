@@ -31,3 +31,9 @@ Aluno: Eduardo Oliveira (33137) | Curso: ECGM | Unidade Curricular: Sistemas Mul
 - Calibração fina da sensibilidade do microfone para responder prontamente a sopros suaves.
 - Introduzida a dificuldade progressiva (Traffic Flow Dynamic): a taxa de surgimento de veículos acelera à medida que a pontuação ecológica aumenta.
 - Testes finais de usabilidade, limpeza de erros de consola e sincronização completa do código no repositório GitHub.
+
+### Sessão 7 — Refatoração de Hitboxes, Sincronização e Tráfego Fluido
+- Implementação do algoritmo de colisão por Caixas Alinhadas aos Eixos (AABB), utilizando as dimensões reais das imagens escaladas em conjunto com o comprimento ocupado na fila (this.tamanho).
+- Recalibração precisa dos pontos de retenção (linhaParagem) nas quatro vias do mapa para alinhar a frente dos veículos com as linhas brancas do cruzamento.
+- Reestruturação da lógica do método atualizar() na classe Veiculo.js com prioridade ao estado VERDE dos semáforos, garantindo arranque imediato e eliminação de bloqueios perpétuos.
+- Eliminação de erros de sintaxe e consolidação total da comunicação entre sketch.js, Veiculo.js e Semaforo.js para suporte contínuo à Onda Verde e cálculo do CO₂ evitado.

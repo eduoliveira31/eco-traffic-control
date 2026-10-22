@@ -4,22 +4,35 @@ let veiculos = [];
 let audioManager;
 let tempoUltimoVeiculo = 0;
 
+// Imagens do jogo
+let imgCarro, imgAutocarro, imgBicicleta;
+let imgSemaforoVermelho, imgSemaforoVerde, imgEstrada;
+
 // Variáveis Ecológicas e Dificuldade
 let pontosCO2 = 0;
 let nivelPoluicao = 0;
 let maxPoluicao = 100;
 let motivoGameOver = "";
 
+function preload() {
+  imgCarro = loadImage('assets/imagens/carro.png');
+  imgAutocarro = loadImage('assets/imagens/autocarro.png');
+  imgBicicleta = loadImage('assets/imagens/bicicleta.png');
+  imgSemaforoVermelho = loadImage('assets/imagens/semaforo_vermelho.png');
+  imgSemaforoVerde = loadImage('assets/imagens/semaforo_verde.png');
+  imgEstrada = loadImage('assets/imagens/estrada.png');
+}
+
 function setup() {
   createCanvas(800, 600);
-
   audioManager = new AudioManager();
 
-  // Semáforos nos 4 cantos
-  semaforos.push(new Semaforo(325, 225, 'V')); // Norte
-  semaforos.push(new Semaforo(475, 375, 'V')); // Sul
-  semaforos.push(new Semaforo(475, 225, 'H')); // Este
-  semaforos.push(new Semaforo(325, 375, 'H')); // Oeste
+  // Semáforos nos cantos dos passeios
+  // [0] = Norte, [1] = Sul, [2] = Este, [3] = Oeste
+  semaforos.push(new Semaforo(310, 150, 'V')); 
+  semaforos.push(new Semaforo(490, 450, 'V')); 
+  semaforos.push(new Semaforo(550, 210, 'H')); 
+  semaforos.push(new Semaforo(250, 390, 'H')); 
 }
 
 function draw() {
@@ -67,24 +80,12 @@ function desenhaInicio() {
 function desenhaJogo() {
   audioManager.atualizar();
 
-  // Estradas
-  rectMode(CENTER);
-  fill(60);
-  noStroke();
-  rect(width / 2, height / 2, width, 120);  
-  rect(width / 2, height / 2, 120, height); 
-
-  // Linhas
-  stroke(255, 200, 0);
-  strokeWeight(2);
-  line(0, height / 2, width, height / 2);
-  line(width / 2, 0, width / 2, height);
-  noStroke();
+  image(imgEstrada, 0, 0, width, height);
 
   // DIFICULDADE PROGRESSIVA
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
 
-  // Gerar veículos
+  // Gerar novos veículos
   if (millis() - tempoUltimoVeiculo > intervaloGeracao) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
@@ -97,12 +98,12 @@ function desenhaJogo() {
     v.atualizar(semaforos, veiculos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // APENAS carros a combustão parados geram poluição
+    // Apenas carros a combustão parados aumentam a poluição
     if (v.parado && v.tipo === 'CAR') {
       nivelPoluicao += 0.035;
     }
 
-    // Detetar Colisões (Acidentes)
+    // Detetar Colisões entre veículos de rotas cruzadas
     for (let j = i - 1; j >= 0; j--) {
       let outro = veiculos[j];
       if (v.origem !== outro.origem && v.colideCom(outro)) {
@@ -111,13 +112,13 @@ function desenhaJogo() {
       }
     }
 
-    // PONTUAÇÃO PARA TODOS OS VEÍCULOS AO SAÍREM COM SUCESSO:
+    // Pontuação atribuída ao sair do ecrã com sucesso
     if (v.removido) {
       let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; 
       
       if (v.tipo === 'ECO-BUS') pontosCO2 += 50 * multiplicador; 
       else if (v.tipo === 'BIKE') pontosCO2 += 20 * multiplicador;    
-      else if (v.tipo === 'CAR') pontosCO2 += 10 * multiplicador; // Todos os veículos dão pontos!
+      else if (v.tipo === 'CAR') pontosCO2 += 10 * multiplicador; 
       
       veiculos.splice(i, 1);
     }
@@ -128,11 +129,11 @@ function desenhaJogo() {
     s.desenhar();
   }
 
-  // Interface
+  // Interface de utilizador
   audioManager.desenharBarras();
   desenhaPainelEcologico();
 
-  // Fim por Poluição
+  // Fim de jogo por poluição excessiva
   if (nivelPoluicao >= maxPoluicao) {
     motivoGameOver = "A CIDADE FICOU DEMASIADO POLUÍDA!";
     estado = 2;

@@ -2,136 +2,145 @@ class Veiculo {
   constructor(origem) {
     this.origem = origem; // 'NORTE', 'SUL', 'ESTE', 'OESTE'
     this.tipo = random(['CAR', 'ECO-BUS', 'BIKE']);
-    this.tamanho = this.tipo === 'ECO-BUS' ? 35 : (this.tipo === 'BIKE' ? 15 : 25);
+    
+    // Espaço ocupado na fila de trânsito (comprimento)
+    if (this.tipo === 'ECO-BUS') {
+      this.tamanho = 220; 
+    } else if (this.tipo === 'CAR') {
+      this.tamanho = 100; 
+    } else if (this.tipo === 'BIKE') {
+      this.tamanho = 60;  
+    }
+    
     this.velocidadeBase = this.tipo === 'BIKE' ? 1.5 : (this.tipo === 'ECO-BUS' ? 2.0 : 2.5);
     this.velocidade = this.velocidadeBase;
     this.parado = false;
     this.removido = false;
 
-    // Configuração inicial de posições e faixas de rodagem
+    // Coordenadas e linhas de paragem ajustadas às linhas brancas reais do mapa
     if (this.origem === 'NORTE') {
-      this.x = 365;
-      this.y = -20;
-      this.dirX = 0;
-      this.dirY = 1;
-      this.linhaParagem = 200;
+      this.x = 365; this.y = -50; this.dirX = 0; this.dirY = 1; 
+      this.linhaParagem = 150; 
+      this.rotacao = PI;      
     } else if (this.origem === 'SUL') {
-      this.x = 435;
-      this.y = height + 20;
-      this.dirX = 0;
-      this.dirY = -1;
-      this.linhaParagem = 400;
+      this.x = 435; this.y = height + 50; this.dirX = 0; this.dirY = -1; 
+      this.linhaParagem = 440; 
+      this.rotacao = 0;       
     } else if (this.origem === 'OESTE') {
-      this.x = -20;
-      this.y = 335;
-      this.dirX = 1;
-      this.dirY = 0;
-      this.linhaParagem = 300;
+      this.x = -50; this.y = 335; this.dirX = 1; this.dirY = 0; 
+      this.linhaParagem = 260; 
+      this.rotacao = HALF_PI; 
     } else if (this.origem === 'ESTE') {
-      this.x = width + 20;
-      this.y = 265;
-      this.dirX = -1;
-      this.dirY = 0;
-      this.linhaParagem = 500;
+      this.x = width + 50; this.y = 265; this.dirX = -1; this.dirY = 0; 
+      this.linhaParagem = 540; 
+      this.rotacao = -HALF_PI; 
     }
   }
 
-  atualizar(semaforos, todosVeiculos, ondaVerdeAtiva) {
-    // Impulso da Onda Verde
-    if (ondaVerdeAtiva && (this.tipo === 'ECO-BUS' || this.tipo === 'BIKE')) {
-      this.velocidade = this.velocidadeBase * 2.5;
-    } else {
-      this.velocidade = this.velocidadeBase;
+  atualizar(semaforos, veiculos, ondaVerdeAtiva) {
+    // 1. IDENTIFICAR O SEMÁFORO DA VIA
+    let idxSemaforo = 0;
+    if (this.origem === 'NORTE') idxSemaforo = 0;
+    else if (this.origem === 'SUL') idxSemaforo = 1;
+    else if (this.origem === 'ESTE') idxSemaforo = 2;
+    else if (this.origem === 'OESTE') idxSemaforo = 3;
+
+    let semaforo = (semaforos && semaforos[idxSemaforo]) ? semaforos[idxSemaforo] : null;
+    
+    // Prioriza a verificação de VERDE para libertar o veículo imediatamente
+    let estaVermelho = false;
+    if (semaforo) {
+      if (semaforo.estado === 'VERDE' || semaforo.cor === 'VERDE') {
+        estaVermelho = false;
+      } else if (semaforo.estado === 'VERMELHO' || semaforo.cor === 'VERMELHO' || semaforo.vermelho === true) {
+        estaVermelho = true;
+      }
     }
 
-    // Identificar semáforo da rota
-    let semaforoCorrespondente;
-    if (this.origem === 'NORTE') semaforoCorrespondente = semaforos[0];
-    if (this.origem === 'SUL') semaforoCorrespondente = semaforos[1];
-    if (this.origem === 'ESTE') semaforoCorrespondente = semaforos[2];
-    if (this.origem === 'OESTE') semaforoCorrespondente = semaforos[3];
-
-    // 1. Verificação do Semáforo Vermelho
-    let pertoDaLinha = false;
-    if (this.origem === 'NORTE' && this.y < this.linhaParagem && this.y + this.velocidade >= this.linhaParagem) pertoDaLinha = true;
-    if (this.origem === 'SUL' && this.y > this.linhaParagem && this.y - this.velocidade <= this.linhaParagem) pertoDaLinha = true;
-    if (this.origem === 'OESTE' && this.x < this.linhaParagem && this.x + this.velocidade >= this.linhaParagem) pertoDaLinha = true;
-    if (this.origem === 'ESTE' && this.x > this.linhaParagem && this.x - this.velocidade <= this.linhaParagem) pertoDaLinha = true;
-
-    let deveParar = false;
-
-    if (pertoDaLinha && semaforoCorrespondente.estado === 'VERMELHO') {
-      deveParar = true;
+    if (ondaVerdeAtiva) {
+      estaVermelho = false;
     }
 
-    // 2. Verificação de Fila de Espera (Não sobrepor ao veículo da frente)
-    for (let outro of todosVeiculos) {
-      if (outro !== this && outro.origem === this.origem) {
-        let d = dist(this.x, this.y, outro.x, outro.y);
-        let distMinima = (this.tamanho / 2) + (outro.tamanho / 2) + 12; // Margem de segurança
+    // 2. PARAGEM NO SEMÁFORO VERMELHO
+    let pararNoSemaforo = false;
+    if (estaVermelho) {
+      let frente = this.tamanho / 2;
+      if (this.origem === 'NORTE' && (this.y + frente) >= (this.linhaParagem - 15) && this.y < this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'SUL' && (this.y - frente) <= (this.linhaParagem + 15) && this.y > this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'OESTE' && (this.x + frente) >= (this.linhaParagem - 15) && this.x < this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 15) && this.x > this.linhaParagem) pararNoSemaforo = true;
+    }
 
-        // Se o outro veículo estiver à frente na mesma direção
-        if (d < distMinima) {
-          if (this.origem === 'NORTE' && outro.y > this.y) deveParar = true;
-          if (this.origem === 'SUL' && outro.y < this.y) deveParar = true;
-          if (this.origem === 'OESTE' && outro.x > this.x) deveParar = true;
-          if (this.origem === 'ESTE' && outro.x < this.x) deveParar = true;
+    // 3. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO
+    let pararPorOutro = false;
+    if (veiculos) {
+      for (let outro of veiculos) {
+        if (outro !== this && outro.origem === this.origem) {
+          if (this.colideCom(outro)) {
+            let estaAFrente = false;
+            if (this.origem === 'NORTE' && outro.y > this.y) estaAFrente = true;
+            if (this.origem === 'SUL' && outro.y < this.y) estaAFrente = true;
+            if (this.origem === 'OESTE' && outro.x > this.x) estaAFrente = true;
+            if (this.origem === 'ESTE' && outro.x < this.x) estaAFrente = true;
+
+            if (estaAFrente) {
+              pararPorOutro = true;
+              break;
+            }
+          }
         }
       }
     }
 
-    // Se o semáforo passar a VERDE e não houver carros à frente, avança
-    if (semaforoCorrespondente.estado === 'VERDE' && !this.haVeiculoAFrente(todosVeiculos)) {
-      deveParar = false;
-    }
+    this.parado = pararNoSemaforo || pararPorOutro;
 
-    this.parado = deveParar;
-
-    // Movimentação
     if (!this.parado) {
       this.x += this.dirX * this.velocidade;
       this.y += this.dirY * this.velocidade;
     }
 
-    // Marcar remoção fora do ecrã
-    if (this.x < -60 || this.x > width + 60 || this.y < -60 || this.y > height + 60) {
+    if (this.x < -100 || this.x > width + 100 || this.y < -100 || this.y > height + 100) {
       this.removido = true;
     }
   }
 
-  // Função auxiliar para saber se tem veículo colado à frente
-  haVeiculoAFrente(todosVeiculos) {
-    for (let outro of todosVeiculos) {
-      if (outro !== this && outro.origem === this.origem) {
-        let d = dist(this.x, this.y, outro.x, outro.y);
-        let distMinima = (this.tamanho / 2) + (outro.tamanho / 2) + 12;
-        if (d < distMinima) {
-          if (this.origem === 'NORTE' && outro.y > this.y) return true;
-          if (this.origem === 'SUL' && outro.y < this.y) return true;
-          if (this.origem === 'OESTE' && outro.x > this.x) return true;
-          if (this.origem === 'ESTE' && outro.x < this.x) return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // Deteta colisão física com veículos de cruzamento
-  colideCom(outro) {
-    let d = dist(this.x, this.y, outro.x, outro.y);
-    return d < (this.tamanho / 2 + outro.tamanho / 2);
-  }
-
   desenhar() {
     push();
-    rectMode(CENTER);
-    noStroke();
+    imageMode(CENTER);
+    translate(this.x, this.y);
+    rotate(this.rotacao);
 
-    if (this.tipo === 'ECO-BUS') fill(46, 204, 113);      // Verde
-    else if (this.tipo === 'BIKE') fill(241, 196, 15);    // Amarelo
-    else fill(231, 76, 60);                               // Vermelho
+    if (this.tipo === 'CAR') {
+      image(imgCarro, 0, 0, imgCarro.width * 0.15, imgCarro.height * 0.15);
+    } else if (this.tipo === 'ECO-BUS') {
+      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.15, imgAutocarro.height * 0.15);
+    } else if (this.tipo === 'BIKE') {
+      image(imgBicicleta, 0, 0, imgBicicleta.width * 0.10, imgBicicleta.height * 0.10);
+    }
 
-    rect(this.x, this.y, this.tamanho, this.tamanho, 4);
     pop();
+  }
+
+  colideCom(outro) {
+    let getLargura = (v) => {
+      if (v.tipo === 'CAR') return imgCarro ? imgCarro.width * 0.15 : 60;
+      if (v.tipo === 'ECO-BUS') return imgAutocarro ? imgAutocarro.width * 0.15 : 80;
+      if (v.tipo === 'BIKE') return imgBicicleta ? imgBicicleta.width * 0.10 : 36;
+      return 60;
+    };
+
+    let largEste = getLargura(this);
+    let largOutro = getLargura(outro);
+
+    let w1 = (this.origem === 'NORTE' || this.origem === 'SUL') ? largEste : this.tamanho;
+    let h1 = (this.origem === 'NORTE' || this.origem === 'SUL') ? this.tamanho : largEste;
+    
+    let w2 = (outro.origem === 'NORTE' || outro.origem === 'SUL') ? largOutro : outro.tamanho;
+    let h2 = (outro.origem === 'NORTE' || outro.origem === 'SUL') ? outro.tamanho : largOutro;
+
+    let esq1 = this.x - w1 / 2, dir1 = this.x + w1 / 2, topo1 = this.y - h1 / 2, base1 = this.y + h1 / 2;
+    let esq2 = outro.x - w2 / 2, dir2 = outro.x + w2 / 2, topo2 = outro.y - h2 / 2, base2 = outro.y + h2 / 2;
+
+    return (esq1 < dir2 && dir1 > esq2 && topo1 < base2 && base1 > topo2);
   }
 }
