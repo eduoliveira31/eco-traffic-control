@@ -3,21 +3,12 @@ class Veiculo {
     this.origem = origem; // 'NORTE', 'SUL', 'ESTE', 'OESTE'
     this.tipo = random(['CAR', 'ECO-BUS', 'BIKE']);
     
-    // Espaço ocupado na fila de trânsito (comprimento)
-    if (this.tipo === 'ECO-BUS') {
-      this.tamanho = 220; 
-    } else if (this.tipo === 'CAR') {
-      this.tamanho = 100; 
-    } else if (this.tipo === 'BIKE') {
-      this.tamanho = 60;  
-    }
-    
     this.velocidadeBase = this.tipo === 'BIKE' ? 1.5 : (this.tipo === 'ECO-BUS' ? 2.0 : 2.5);
     this.velocidade = this.velocidadeBase;
     this.parado = false;
     this.removido = false;
 
-    // Coordenadas e linhas de paragem ajustadas às linhas brancas reais do mapa
+    // Coordenadas e linhas de paragem alinhadas com as faixas do mapa
     if (this.origem === 'NORTE') {
       this.x = 365; this.y = -50; this.dirX = 0; this.dirY = 1; 
       this.linhaParagem = 150; 
@@ -37,7 +28,35 @@ class Veiculo {
     }
   }
 
+  getDimensoes() {
+    let img = imgCarro;
+    let escala = 0.12;
+    
+    if (this.tipo === 'ECO-BUS') {
+      img = imgAutocarro;
+      escala = 0.12;
+    } else if (this.tipo === 'BIKE') {
+      img = imgBicicleta;
+      escala = 0.08;
+    }
+
+    // CONTROLOS INDEPENDENTES
+    let margemLargura = 0.5;      // Largura da caixa (evita bater nas faixas do lado)
+    let margemComprimento = 0.85;  // Comprimento da caixa (distância entre carros na mesma fila)
+    
+    let largImg = (img && img.width > 0) ? (img.width * escala) * margemLargura : 20;
+    let altImg = (img && img.height > 0) ? (img.height * escala) * margemComprimento : 40;
+
+    if (this.origem === 'NORTE' || this.origem === 'SUL') {
+      return { w: largImg, h: altImg };
+    } else {
+      return { w: altImg, h: largImg };
+    }
+  }
+
   atualizar(semaforos, veiculos, ondaVerdeAtiva) {
+    let dim = this.getDimensoes();
+
     // 1. IDENTIFICAR O SEMÁFORO DA VIA
     let idxSemaforo = 0;
     if (this.origem === 'NORTE') idxSemaforo = 0;
@@ -47,7 +66,6 @@ class Veiculo {
 
     let semaforo = (semaforos && semaforos[idxSemaforo]) ? semaforos[idxSemaforo] : null;
     
-    // Prioriza a verificação de VERDE para libertar o veículo imediatamente
     let estaVermelho = false;
     if (semaforo) {
       if (semaforo.estado === 'VERDE' || semaforo.cor === 'VERDE') {
@@ -64,14 +82,14 @@ class Veiculo {
     // 2. PARAGEM NO SEMÁFORO VERMELHO
     let pararNoSemaforo = false;
     if (estaVermelho) {
-      let frente = this.tamanho / 2;
-      if (this.origem === 'NORTE' && (this.y + frente) >= (this.linhaParagem - 15) && this.y < this.linhaParagem) pararNoSemaforo = true;
-      if (this.origem === 'SUL' && (this.y - frente) <= (this.linhaParagem + 15) && this.y > this.linhaParagem) pararNoSemaforo = true;
-      if (this.origem === 'OESTE' && (this.x + frente) >= (this.linhaParagem - 15) && this.x < this.linhaParagem) pararNoSemaforo = true;
-      if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 15) && this.x > this.linhaParagem) pararNoSemaforo = true;
+      let frente = (this.origem === 'NORTE' || this.origem === 'SUL') ? dim.h / 2 : dim.w / 2;
+      if (this.origem === 'NORTE' && (this.y + frente) >= (this.linhaParagem - 10) && this.y < this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'SUL' && (this.y - frente) <= (this.linhaParagem + 10) && this.y > this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'OESTE' && (this.x + frente) >= (this.linhaParagem - 10) && this.x < this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 10) && this.x > this.linhaParagem) pararNoSemaforo = true;
     }
 
-    // 3. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO
+    // 3. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (NA MESMA VIA)
     let pararPorOutro = false;
     if (veiculos) {
       for (let outro of veiculos) {
@@ -111,35 +129,41 @@ class Veiculo {
     rotate(this.rotacao);
 
     if (this.tipo === 'CAR') {
-      image(imgCarro, 0, 0, imgCarro.width * 0.15, imgCarro.height * 0.15);
+      image(imgCarro, 0, 0, imgCarro.width * 0.12, imgCarro.height * 0.12);
     } else if (this.tipo === 'ECO-BUS') {
-      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.15, imgAutocarro.height * 0.15);
+      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.12, imgAutocarro.height * 0.12);
     } else if (this.tipo === 'BIKE') {
-      image(imgBicicleta, 0, 0, imgBicicleta.width * 0.10, imgBicicleta.height * 0.10);
+      image(imgBicicleta, 0, 0, imgBicicleta.width * 0.08, imgBicicleta.height * 0.08);
     }
 
+    pop();
+
+    // ==========================================
+    // VER HITBOX (REMOVER OU COMENTAR NO FIM)
+    // ==========================================
+    push();
+    rectMode(CENTER);
+    noFill();
+    stroke(255, 0, 0); // Linha vermelha
+    strokeWeight(2);
+    let dim = this.getDimensoes();
+    rect(this.x, this.y, dim.w, dim.h);
     pop();
   }
 
   colideCom(outro) {
-    let getLargura = (v) => {
-      if (v.tipo === 'CAR') return imgCarro ? imgCarro.width * 0.15 : 60;
-      if (v.tipo === 'ECO-BUS') return imgAutocarro ? imgAutocarro.width * 0.15 : 80;
-      if (v.tipo === 'BIKE') return imgBicicleta ? imgBicicleta.width * 0.10 : 36;
-      return 60;
-    };
+    let dim1 = this.getDimensoes();
+    let dim2 = outro.getDimensoes();
 
-    let largEste = getLargura(this);
-    let largOutro = getLargura(outro);
+    let esq1 = this.x - dim1.w / 2;
+    let dir1 = this.x + dim1.w / 2;
+    let topo1 = this.y - dim1.h / 2;
+    let base1 = this.y + dim1.h / 2;
 
-    let w1 = (this.origem === 'NORTE' || this.origem === 'SUL') ? largEste : this.tamanho;
-    let h1 = (this.origem === 'NORTE' || this.origem === 'SUL') ? this.tamanho : largEste;
-    
-    let w2 = (outro.origem === 'NORTE' || outro.origem === 'SUL') ? largOutro : outro.tamanho;
-    let h2 = (outro.origem === 'NORTE' || outro.origem === 'SUL') ? outro.tamanho : largOutro;
-
-    let esq1 = this.x - w1 / 2, dir1 = this.x + w1 / 2, topo1 = this.y - h1 / 2, base1 = this.y + h1 / 2;
-    let esq2 = outro.x - w2 / 2, dir2 = outro.x + w2 / 2, topo2 = outro.y - h2 / 2, base2 = outro.y + h2 / 2;
+    let esq2 = outro.x - dim2.w / 2;
+    let dir2 = outro.x + dim2.w / 2;
+    let topo2 = outro.y - dim2.h / 2;
+    let base2 = outro.y + dim2.h / 2;
 
     return (esq1 < dir2 && dir1 > esq2 && topo1 < base2 && base1 > topo2);
   }
