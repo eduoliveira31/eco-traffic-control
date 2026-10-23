@@ -37,3 +37,24 @@ Aluno: Eduardo Oliveira (33137) | Curso: ECGM | Unidade Curricular: Sistemas Mul
 - Recalibração precisa dos pontos de retenção (linhaParagem) nas quatro vias do mapa para alinhar a frente dos veículos com as linhas brancas do cruzamento.
 - Reestruturação da lógica do método atualizar() na classe Veiculo.js com prioridade ao estado VERDE dos semáforos, garantindo arranque imediato e eliminação de bloqueios perpétuos.
 - Eliminação de erros de sintaxe e consolidação total da comunicação entre sketch.js, Veiculo.js e Semaforo.js para suporte contínuo à Onda Verde e cálculo do CO₂ evitado.
+
+### Sessão 8 — Ajustes Visuais e Controlo Individual de Dimensões
+Otimização do ecrã de relatório final (desenhaFim), removendo a classificação do condutor e reorganizando o layout para maior clareza visual.
+
+- Implementação de um controlo individual de dimensões no método getDimensoes() da classe Veiculo.js, permitindo ajustar especificamente a hitbox e área do ECO-BUS.
+
+- Criação de uma ferramenta temporária de debug visual no método desenhar() para renderizar as hitboxes dos veículos a vermelho e facilitar a calibração do tamanho.
+
+### Sessão 9 — Cálculo Preciso de Espaçamento e Para-choques
+- Resolução de problemas de sobreposição entre veículos através do cálculo dinamizado de distância entre os para-choques realísticos (frente e traseira).
+
+- Eliminação do problema em que carros pequenos penetravam na traseira de veículos maiores (autocarros) durante as paragens em fila.
+
+- Introdução e parametrização do indicador de folga no passo 4 do método atualizar(), garantindo uma distância visual limpa e personalizável entre veículos parados.
+
+### Sessão 10 — Efeitos Sonoros e Imersão Auditiva
+- Seleção, download e integração de ativos de áudio na pasta assets/audios/ para reforço do feedback de UI/UX.
+
+- Integração de efeitos sonoros (SFX) para a interatividade dos semáforos (clique_semaforo.mp3) e ativação da mecânica de microfone (onda_verde.mp3).
+
+- Implementação de faixa de música de fundo em loop (musica_fundo.mp3) e ruído ambiente urbano (ambiente_transito.mp3), com ajuste de volumes e paragem automática ao ocorrer colisão ou paragem da simulação.
