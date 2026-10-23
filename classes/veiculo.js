@@ -57,7 +57,14 @@ class Veiculo {
   atualizar(semaforos, veiculos, ondaVerdeAtiva) {
     let dim = this.getDimensoes();
 
-    // 1. IDENTIFICAR O SEMÁFORO DA VIA
+    // 1. AUMENTAR VELOCIDADE DURANTE A ONDA VERDE
+    if (ondaVerdeAtiva) {
+      this.velocidade = this.velocidadeBase * 1.8; // Aumenta a velocidade em 80%
+    } else {
+      this.velocidade = this.velocidadeBase;
+    }
+
+    // 2. IDENTIFICAR O SEMÁFORO DA VIA
     let idxSemaforo = 0;
     if (this.origem === 'NORTE') idxSemaforo = 0;
     else if (this.origem === 'SUL') idxSemaforo = 1;
@@ -75,21 +82,19 @@ class Veiculo {
       }
     }
 
-    if (ondaVerdeAtiva) {
-      estaVermelho = false;
-    }
+    // (Linha que perdoava o vermelho removida daqui para respeitar os sinais)
 
-    // 2. PARAGEM NO SEMÁFORO VERMELHO
+    // 3. PARAGEM NO SEMÁFORO VERMELHO
     let pararNoSemaforo = false;
     if (estaVermelho) {
       let frente = (this.origem === 'NORTE' || this.origem === 'SUL') ? dim.h / 2 : dim.w / 2;
       if (this.origem === 'NORTE' && (this.y + frente) >= (this.linhaParagem - 10) && this.y < this.linhaParagem) pararNoSemaforo = true;
       if (this.origem === 'SUL' && (this.y - frente) <= (this.linhaParagem + 10) && this.y > this.linhaParagem) pararNoSemaforo = true;
       if (this.origem === 'OESTE' && (this.x + frente) >= (this.linhaParagem - 10) && this.x < this.linhaParagem) pararNoSemaforo = true;
-      if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 10) && this.x > this.linhaParagem) pararNoSemaforo = true;
+      if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 15) && this.x > this.linhaParagem) pararNoSemaforo = true;
     }
 
-    // 3. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (NA MESMA VIA)
+    // 4. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (NA MESMA VIA)
     let pararPorOutro = false;
     if (veiculos) {
       for (let outro of veiculos) {
