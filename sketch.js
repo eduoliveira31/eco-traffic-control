@@ -8,6 +8,9 @@ let tempoUltimoVeiculo = 0;
 let imgCarro, imgAutocarro, imgBicicleta;
 let imgSemaforoVermelho, imgSemaforoVerde, imgEstrada;
 
+// Áudios do jogo
+let somClique, somOndaVerde, somAmbiente, musicaFundo;
+
 // Variáveis Ecológicas e Dificuldade
 let pontosCO2 = 0;
 let nivelPoluicao = 0;
@@ -15,12 +18,20 @@ let maxPoluicao = 100;
 let motivoGameOver = "";
 
 function preload() {
+  // Imagens
   imgCarro = loadImage('assets/imagens/carro.png');
   imgAutocarro = loadImage('assets/imagens/autocarro.png');
   imgBicicleta = loadImage('assets/imagens/bicicleta.png');
   imgSemaforoVermelho = loadImage('assets/imagens/semaforo_vermelho.png');
   imgSemaforoVerde = loadImage('assets/imagens/semaforo_verde.png');
   imgEstrada = loadImage('assets/imagens/estrada.png');
+
+  // Carregar Sons da pasta assets/audios/
+  soundFormats('mp3');
+  somClique = loadSound('assets/audios/clique_semaforo.mp3');
+  somOndaVerde = loadSound('assets/audios/onda_verde.mp3');
+  somAmbiente = loadSound('assets/audios/ambiente_transito.mp3');
+  musicaFundo = loadSound('assets/audios/musica_fundo.mp3');
 }
 
 function setup() {
@@ -28,11 +39,16 @@ function setup() {
   audioManager = new AudioManager();
 
   // Semáforos nos cantos dos passeios
-  // [0] = Norte, [1] = Sul, [2] = Este, [3] = Oeste
   semaforos.push(new Semaforo(310, 150, 'V')); 
   semaforos.push(new Semaforo(490, 450, 'V')); 
   semaforos.push(new Semaforo(550, 210, 'H')); 
   semaforos.push(new Semaforo(250, 390, 'H')); 
+
+  // Ajuste de volumes padrão
+  if (musicaFundo) musicaFundo.setVolume(0.25);
+  if (somAmbiente) somAmbiente.setVolume(0.20);
+  if (somClique) somClique.setVolume(0.50);
+  if (somOndaVerde) somOndaVerde.setVolume(0.40);
 }
 
 function draw() {
@@ -60,14 +76,12 @@ function desenhaInicio() {
   if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
   push();
-  // Card Central Translúcido
   rectMode(CENTER);
   fill(15, 23, 42, 220);
   stroke(51, 65, 85);
   strokeWeight(2);
   rect(width / 2, height / 2 - 15, 680, 470, 16);
 
-  // Título
   textAlign(CENTER, CENTER);
   noStroke();
   fill(46, 204, 113);
@@ -80,7 +94,6 @@ function desenhaInicio() {
   textStyle(NORMAL);
   text("Gestão Inteligente de Tráfego Urbano Sustentável", width / 2, 120);
 
-  // Painel de Regras e Controlos
   fill(30, 41, 59, 180);
   stroke(71, 85, 105);
   rect(width / 2, 230, 620, 160, 10);
@@ -101,7 +114,6 @@ function desenhaInicio() {
   text("• Sopre no Microfone para ativar a ONDA VERDE (Acelera tráfego e duplica CO₂ Evitado).", width / 2 - 290, 250);
   text("• Priorize Transportes Eco (Autocarros Elétricos e Bicicletas) para máxima pontuação.", width / 2 - 290, 270);
 
-  // Status do Microfone e Botão de Início
   textAlign(CENTER, CENTER);
   if (audioManager.mic && !audioManager.calibrado) {
     audioManager.calibrar();
@@ -114,7 +126,6 @@ function desenhaInicio() {
     textStyle(BOLD);
     text("Microfone Calibrado e Pronto!", width / 2, 340);
 
-    // Botão de Start
     fill(46, 204, 113);
     rect(width / 2, 395, 340, 45, 8);
     fill(15, 23, 42);
@@ -143,37 +154,48 @@ function desenhaJogo() {
 
   if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
-  // DIFICULDADE PROGRESSIVA
+  // Gestão da Música de Fundo e Ruído Urbano em Loop
+  if (musicaFundo && musicaFundo.isLoaded() && !musicaFundo.isPlaying()) {
+    musicaFundo.loop();
+  }
+  if (somAmbiente && somAmbiente.isLoaded() && !somAmbiente.isPlaying()) {
+    somAmbiente.loop();
+  }
+
+  // Som do Efeito Onda Verde (Toca apenas quando a Onda Verde é ativada)
+  if (audioManager.ondaVerdeAtiva) {
+    if (somOndaVerde && somOndaVerde.isLoaded() && !somOndaVerde.isPlaying()) {
+      somOndaVerde.play();
+    }
+  }
+
+  // Dificuldade progressiva
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
 
-  // Gerar novos veículos
   if (millis() - tempoUltimoVeiculo > intervaloGeracao) {
     let origens = ['NORTE', 'SUL', 'ESTE', 'OESTE'];
     veiculos.push(new Veiculo(random(origens)));
     tempoUltimoVeiculo = millis();
   }
 
-  // Atualizar e desenhar veículos
   for (let i = veiculos.length - 1; i >= 0; i--) {
     let v = veiculos[i];
     v.atualizar(semaforos, veiculos, audioManager.ondaVerdeAtiva);
     v.desenhar();
 
-    // Apenas carros a combustão parados aumentam a poluição
     if (v.parado && v.tipo === 'CAR') {
       nivelPoluicao += 0.035;
     }
 
-    // Detetar Colisões entre veículos de rotas cruzadas
     for (let j = i - 1; j >= 0; j--) {
       let outro = veiculos[j];
       if (v.origem !== outro.origem && v.colideCom(outro)) {
         motivoGameOver = "COLISÃO GRAVE NO CRUZAMENTO!";
+        pararSonsBackground();
         estado = 2;
       }
     }
 
-    // Pontuação atribuída ao sair do ecrã
     if (v.removido) {
       let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; 
       
@@ -185,30 +207,34 @@ function desenhaJogo() {
     }
   }
 
-  // Desenhar Semáforos
   for (let s of semaforos) {
     s.desenhar();
   }
 
-  // Interface do Jogo
   audioManager.desenharBarras();
   desenhaPainelEcologico();
 
-  // Fim de jogo por poluição excessiva
   if (nivelPoluicao >= maxPoluicao) {
     motivoGameOver = "A CIDADE ATINGIU NÍVEIS CRÍTICOS DE POLUIÇÃO!";
+    pararSonsBackground();
     estado = 2;
   }
 }
 
+// Parar sons de fundo quando o jogo termina
+function pararSonsBackground() {
+  if (musicaFundo && musicaFundo.isPlaying()) musicaFundo.stop();
+  if (somAmbiente && somAmbiente.isPlaying()) somAmbiente.stop();
+  if (somOndaVerde && somOndaVerde.isPlaying()) somOndaVerde.stop();
+}
+
 // ==========================================
-// HUD DE JOGO (ECO-METRICAS & ONDA VERDE)
+// HUD DE JOGO
 // ==========================================
 function desenhaPainelEcologico() {
   push();
   rectMode(CORNER);
   
-  // Card CO2 Evitado
   fill(15, 23, 42, 210);
   stroke(51, 65, 85);
   strokeWeight(1.5);
@@ -230,7 +256,6 @@ function desenhaPainelEcologico() {
   textStyle(NORMAL);
   text("CO₂ Evitado", width - 130, 42);
 
-  // Card Barra de Poluição
   fill(15, 23, 42, 210);
   stroke(51, 65, 85);
   strokeWeight(1.5);
@@ -242,11 +267,9 @@ function desenhaPainelEcologico() {
   textStyle(BOLD);
   text("POLUIÇÃO URBANA", width - 218, 78);
 
-  // Fundo da barra
   fill(30, 41, 59);
   rect(width - 218, 93, 190, 10, 4);
 
-  // Preenchimento com transição de cor (Verde -> Amarelo -> Vermelho)
   let percentual = constrain(nivelPoluicao / maxPoluicao, 0, 1);
   if (percentual < 0.5) {
     fill(46, 204, 113);
@@ -257,7 +280,6 @@ function desenhaPainelEcologico() {
   }
   rect(width - 218, 93, 190 * percentual, 10, 4);
 
-  // Banner Alerta Onda Verde Ativa
   if (audioManager.ondaVerdeAtiva) {
     rectMode(CENTER);
     fill(46, 204, 113, 230);
@@ -288,7 +310,6 @@ function desenhaFim() {
   strokeWeight(2);
   rect(width / 2, height / 2, 580, 380, 16);
 
-  // Título Game Over
   textAlign(CENTER, CENTER);
   noStroke();
   fill(239, 68, 68);
@@ -296,13 +317,11 @@ function desenhaFim() {
   textStyle(BOLD);
   text("SIMULAÇÃO TERMINADA", width / 2, 140);
 
-  // Motivo da paragem
   fill(226, 232, 240);
   textSize(14);
   textStyle(NORMAL);
   text(motivoGameOver, width / 2, 180);
 
-  // Painel de Resultados
   fill(30, 41, 59, 200);
   stroke(51, 65, 85);
   rect(width / 2, 260, 480, 90, 10);
@@ -317,7 +336,6 @@ function desenhaFim() {
   textStyle(BOLD);
   text(pontosCO2 + " g", width / 2, 275);
 
-  // Botão Reiniciar
   fill(46, 204, 113);
   rect(width / 2, 350, 320, 42, 8);
   fill(15, 23, 42);
@@ -357,6 +375,10 @@ function mousePressed() {
     for (let s of semaforos) {
       if (s.foiClicado(mouseX, mouseY)) {
         s.mudar();
+        // Tocar som de clique ao alterar o semáforo
+        if (somClique && somClique.isLoaded()) {
+          somClique.play();
+        }
       }
     }
   }
@@ -370,6 +392,7 @@ function keyPressed() {
     nivelPoluicao = 0;
   } else if (estado === 1 && (key === 'f' || key === 'F')) {
     motivoGameOver = "SIMULAÇÃO ENCERRADA PELO UTILIZADOR";
+    pararSonsBackground();
     estado = 2;
   } else if (estado === 2 && keyCode === ENTER) {
     estado = 0;
