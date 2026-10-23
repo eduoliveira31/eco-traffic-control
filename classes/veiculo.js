@@ -97,23 +97,48 @@ class Veiculo {
       if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 15) && this.x > this.linhaParagem) pararNoSemaforo = true;
     }
 
-    // 4. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (NA MESMA VIA)
+    // 4. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (CÁLCULO PRECISO DE PARA-CHOQUES)
     let pararPorOutro = false;
     if (veiculos) {
       for (let outro of veiculos) {
         if (outro !== this && outro.origem === this.origem) {
-          if (this.colideCom(outro)) {
-            let estaAFrente = false;
-            if (this.origem === 'NORTE' && outro.y > this.y) estaAFrente = true;
-            if (this.origem === 'SUL' && outro.y < this.y) estaAFrente = true;
-            if (this.origem === 'OESTE' && outro.x > this.x) estaAFrente = true;
-            if (this.origem === 'ESTE' && outro.x < this.x) estaAFrente = true;
+          let dimEsta = this.getDimensoes();
+          let dimOutra = outro.getDimensoes();
 
-            if (estaAFrente) {
+          // Medidas do centro até à extremidade
+          let metadeEu = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimEsta.h / 2 : dimEsta.w / 2;
+          let metadeOutro = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimOutra.h / 2 : dimOutra.w / 2;
+
+          let folga = 35; // Distância mínima visual entre para-choques em píxeis
+
+          // Calculemos a posição exata da FRENTE deste veículo e da TRASEIRA do veículo da frente
+          if (this.origem === 'NORTE' && outro.y > this.y) {
+            let minhaFrente = this.y + metadeEu;
+            let traseiraOutro = outro.y - metadeOutro;
+            if (minhaFrente >= (traseiraOutro - folga) && this.y < outro.y) {
               pararPorOutro = true;
-              break;
+            }
+          } else if (this.origem === 'SUL' && outro.y < this.y) {
+            let minhaFrente = this.y - metadeEu;
+            let traseiraOutro = outro.y + metadeOutro;
+            if (minhaFrente <= (traseiraOutro + folga) && this.y > outro.y) {
+              pararPorOutro = true;
+            }
+          } else if (this.origem === 'OESTE' && outro.x > this.x) {
+            let minhaFrente = this.x + metadeEu;
+            let traseiraOutro = outro.x - metadeOutro;
+            if (minhaFrente >= (traseiraOutro - folga) && this.x < outro.x) {
+              pararPorOutro = true;
+            }
+          } else if (this.origem === 'ESTE' && outro.x < this.x) {
+            let minhaFrente = this.x - metadeEu;
+            let traseiraOutro = outro.x + metadeOutro;
+            if (minhaFrente <= (traseiraOutro + folga) && this.x > outro.x) {
+              pararPorOutro = true;
             }
           }
+
+          if (pararPorOutro) break;
         }
       }
     }
