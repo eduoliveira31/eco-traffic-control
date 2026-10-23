@@ -31,18 +31,21 @@ class Veiculo {
   getDimensoes() {
     let img = imgCarro;
     let escala = 0.12;
+    let margemLargura = 0.85;
+    let margemComprimento = 1.05;
     
     if (this.tipo === 'ECO-BUS') {
       img = imgAutocarro;
       escala = 0.12;
+      // HITBOX LIGEIRAMENTE MAIOR PARA O AUTOCARRO
+      margemLargura = 0.92;      // Aumentado (era 0.85)
+      margemComprimento = 1.12;  // Aumentado (era 1.05)
     } else if (this.tipo === 'BIKE') {
       img = imgBicicleta;
       escala = 0.08;
+      margemLargura = 0.85;
+      margemComprimento = 1.05;
     }
-
-    // CONTROLOS INDEPENDENTES
-    let margemLargura = 0.5;      // Largura da caixa (evita bater nas faixas do lado)
-    let margemComprimento = 1.05;  // Comprimento da caixa (distância entre carros na mesma fila)
     
     let largImg = (img && img.width > 0) ? (img.width * escala) * margemLargura : 20;
     let altImg = (img && img.height > 0) ? (img.height * escala) * margemComprimento : 40;
@@ -136,12 +139,13 @@ class Veiculo {
     if (this.tipo === 'CAR') {
       image(imgCarro, 0, 0, imgCarro.width * 0.17, imgCarro.height * 0.17);
     } else if (this.tipo === 'ECO-BUS') {
-      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.16, imgAutocarro.height * 0.16);
+      image(imgAutocarro, 0, 0, imgAutocarro.width * 0.30, imgAutocarro.height * 0.30);
     } else if (this.tipo === 'BIKE') {
       image(imgBicicleta, 0, 0, imgBicicleta.width * 0.08, imgBicicleta.height * 0.08);
     }
 
     pop();
+
   }
 
   colideCom(outro) {
