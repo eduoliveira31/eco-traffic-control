@@ -58,3 +58,31 @@ Otimização do ecrã de relatório final (desenhaFim), removendo a classificaç
 - Integração de efeitos sonoros (SFX) para a interatividade dos semáforos (clique_semaforo.mp3) e ativação da mecânica de microfone (onda_verde.mp3).
 
 - Implementação de faixa de música de fundo em loop (musica_fundo.mp3) e ruído ambiente urbano (ambiente_transito.mp3), com ajuste de volumes e paragem automática ao ocorrer colisão ou paragem da simulação.
+
+### Declaração de Utilização de Inteligência Artificial (IA)
+
+No âmbito do desenvolvimento do projeto **ECO-TRAFFIC CONTROL**, recorreu-se à utilização de ferramentas de Inteligência Artificial Generativa como elemento de apoio técnico, refatoração de código e co-piloto de desenvolvimento.
+
+---
+
+* **Ferramenta Utilizada:** Gemini (Google DeepMind)
+* **Finalidades:**
+  * Apoio na estruturação e otimização dos algoritmos de física/colisão física AABB (*Axis-Aligned Bounding Box*) e verificação dinâmica de distância entre veículos.
+  * Resolução de erros de renderização, ajuste fino de *hitboxes* individuais por tipo de veículo e correção de sobreposição de para-choques.
+  * Integração da biblioteca `p5.sound` para gestão de microfone (calibração e deteção de áudio) e manipulação de efeitos sonoros (SFX) e música de fundo.
+  * Apoio na escrita e formatação do Diário de Desenvolvimento e documentação do repositório.
+
+---
+
+* **Resultado Utilizado:**
+  * Estruturas de código otimizadas para os métodos `getDimensoes()` e `atualizar()` na classe `Veiculo.js`.
+  * Blocos de lógica para o ciclo de vida do áudio e estado do microfone em `AudioManager.js` e `sketch.js`.
+  * Sugestões de parametrização de margens e tolerâncias de paragem (`folga`).
+
+---
+
+* **Alterações e Decisões Efetuadas pelo Estudante:**
+  * **Seleção e Filtro de Lógica:** As propostas do assistente de IA foram validadas, testadas iterativamente e ajustadas manualmente no ambiente local (VS Code / Live Server) para garantir a coerência com as regras do jogo.
+  * **Ajuste de Valores de Física e Sprites:** Afinação manual das variáveis de escala, margens e folgas de segurança em píxeis para alinhar rigorosamente com as proporções visuais dos ativos (*sprites*) do autocarro, carro e bicicleta.
+  * **Curadoria de Ativos:** Escolha, teste e integração individual dos ficheiros de áudio `.mp3` no projeto, definindo os níveis adequados de volume e os momentos exatos de disparo (*triggers*) no ecossistema do jogo.
+  * **Arquitetura Geral:** A tomada de decisão em relação à estrutura de cenas, cálculo da poluição urbana, mecânica de pontuação e design de interface (HUD/UX) partiu e permaneceu sob total controlo e autoria do estudante.

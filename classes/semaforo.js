@@ -2,8 +2,8 @@ class Semaforo {
   constructor(x, y, orientacao) {
     this.x = x;
     this.y = y;
-    this.orientacao = orientacao; // 'V' ou 'H'
-    this.estado = 'VERMELHO';     // 'VERMELHO' ou 'VERDE'
+    this.orientacao = orientacao; 
+    this.estado = 'VERMELHO';     
     this.tamanho = 30;
   }
 
@@ -24,7 +24,6 @@ class Semaforo {
     push();
     imageMode(CENTER);
     
-    // Altera este valor para ajustar o tamanho sem desformatar a imagem
     let escala = 0.15; 
     
     if (this.estado === 'VERMELHO') {

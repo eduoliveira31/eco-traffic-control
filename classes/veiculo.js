@@ -1,6 +1,6 @@
 class Veiculo {
   constructor(origem) {
-    this.origem = origem; // 'NORTE', 'SUL', 'ESTE', 'OESTE'
+    this.origem = origem; 
     this.tipo = random(['CAR', 'ECO-BUS', 'BIKE']);
     
     this.velocidadeBase = this.tipo === 'BIKE' ? 1.5 : (this.tipo === 'ECO-BUS' ? 2.0 : 2.5);
@@ -8,7 +8,6 @@ class Veiculo {
     this.parado = false;
     this.removido = false;
 
-    // Coordenadas e linhas de paragem alinhadas com as faixas do mapa
     if (this.origem === 'NORTE') {
       this.x = 365; this.y = -50; this.dirX = 0; this.dirY = 1; 
       this.linhaParagem = 150; 
@@ -37,9 +36,8 @@ class Veiculo {
     if (this.tipo === 'ECO-BUS') {
       img = imgAutocarro;
       escala = 0.12;
-      // HITBOX LIGEIRAMENTE MAIOR PARA O AUTOCARRO
-      margemLargura = 0.92;      // Aumentado (era 0.85)
-      margemComprimento = 1.12;  // Aumentado (era 1.05)
+      margemLargura = 0.92;     
+      margemComprimento = 1.12; 
     } else if (this.tipo === 'BIKE') {
       img = imgBicicleta;
       escala = 0.08;
@@ -60,14 +58,12 @@ class Veiculo {
   atualizar(semaforos, veiculos, ondaVerdeAtiva) {
     let dim = this.getDimensoes();
 
-    // 1. AUMENTAR VELOCIDADE DURANTE A ONDA VERDE
     if (ondaVerdeAtiva) {
-      this.velocidade = this.velocidadeBase * 1.8; // Aumenta a velocidade em 80%
+      this.velocidade = this.velocidadeBase * 1.8; 
     } else {
       this.velocidade = this.velocidadeBase;
     }
 
-    // 2. IDENTIFICAR O SEMÁFORO DA VIA
     let idxSemaforo = 0;
     if (this.origem === 'NORTE') idxSemaforo = 0;
     else if (this.origem === 'SUL') idxSemaforo = 1;
@@ -85,9 +81,6 @@ class Veiculo {
       }
     }
 
-    // (Linha que perdoava o vermelho removida daqui para respeitar os sinais)
-
-    // 3. PARAGEM NO SEMÁFORO VERMELHO
     let pararNoSemaforo = false;
     if (estaVermelho) {
       let frente = (this.origem === 'NORTE' || this.origem === 'SUL') ? dim.h / 2 : dim.w / 2;
@@ -97,7 +90,6 @@ class Veiculo {
       if (this.origem === 'ESTE' && (this.x - frente) <= (this.linhaParagem + 15) && this.x > this.linhaParagem) pararNoSemaforo = true;
     }
 
-    // 4. PARAGEM EM FILA ATRÁS DE OUTRO VEÍCULO (CÁLCULO PRECISO DE PARA-CHOQUES)
     let pararPorOutro = false;
     if (veiculos) {
       for (let outro of veiculos) {
@@ -105,13 +97,11 @@ class Veiculo {
           let dimEsta = this.getDimensoes();
           let dimOutra = outro.getDimensoes();
 
-          // Medidas do centro até à extremidade
           let metadeEu = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimEsta.h / 2 : dimEsta.w / 2;
           let metadeOutro = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimOutra.h / 2 : dimOutra.w / 2;
 
-          let folga = 35; // Distância mínima visual entre para-choques em píxeis
+          let folga = 35; 
 
-          // Calculemos a posição exata da FRENTE deste veículo e da TRASEIRA do veículo da frente
           if (this.origem === 'NORTE' && outro.y > this.y) {
             let minhaFrente = this.y + metadeEu;
             let traseiraOutro = outro.y - metadeOutro;

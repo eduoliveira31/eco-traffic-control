@@ -5,16 +5,14 @@ class AudioManager {
     this.tempoCalibracao = 2000;
     this.inicioCalibracao = 0;
     
-    // Subido de 0.25 para 0.40 para reduzir ligeiramente a sensibilidade
     this.limiarMax = 0.40; 
     
-    // Onda Verde com Temporizador de 4 segundos
     this.ondaVerdeAtiva = false;
     this.duracaoOndaVerde = 4000; 
     this.tempoAtivacao = 0;
     
     this.emCooldown = false;
-    this.tempoCooldown = 1500; // 1.5s de pausa
+    this.tempoCooldown = 1500; 
   }
 
   inicializar() {
@@ -37,20 +35,17 @@ class AudioManager {
     let volume = volumeBruto * 5.0; 
     let agora = millis();
 
-    // 1. Controlo de tempo da Onda Verde (4s)
     if (this.ondaVerdeAtiva) {
       if (agora - this.tempoAtivacao >= this.duracaoOndaVerde) {
         this.ondaVerdeAtiva = false;
         this.emCooldown = true;
       }
     } 
-    // 2. Cooldown (1.5s)
     else if (this.emCooldown) {
       if (agora - (this.tempoAtivacao + this.duracaoOndaVerde) >= this.tempoCooldown) {
         this.emCooldown = false;
       }
     } 
-    // 3. Ativar apenas quando ultrapassar o novo limiar
     else if (volume > this.limiarMax) {
       this.ondaVerdeAtiva = true;
       this.tempoAtivacao = agora;
@@ -65,14 +60,12 @@ class AudioManager {
     let volAmplificado = volBruto * 5.0;
     let agora = millis();
     
-    // 1. Barra de Volume do Microfone
     fill(30);
     rect(20, 40, 150, 15, 4);
     
     fill(this.ondaVerdeAtiva ? color(46, 204, 113) : color(52, 152, 219));
     rect(20, 40, map(volAmplificado, 0, 0.8, 0, 150, true), 15, 4);
     
-    // Linha Vermelha de Disparo
     stroke(231, 76, 60);
     strokeWeight(2);
     let xMax = 20 + map(this.limiarMax, 0, 0.8, 0, 150, true);
@@ -84,7 +77,6 @@ class AudioManager {
     textAlign(LEFT, BOTTOM);
     text("MIC: " + (this.ondaVerdeAtiva ? "ONDA VERDE ATIVA!" : (this.emCooldown ? "RECARREGANDO..." : "Pronto")), 20, 36);
 
-    // 2. Barra de Tempo Restante
     fill(30);
     rect(20, 75, 150, 15, 4);
     

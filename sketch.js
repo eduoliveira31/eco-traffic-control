@@ -1,24 +1,20 @@
-let estado = 0; // 0 = Início, 1 = Jogo, 2 = Fim
+let estado = 0; 
 let semaforos = [];
 let veiculos = [];
 let audioManager;
 let tempoUltimoVeiculo = 0;
 
-// Imagens do jogo
 let imgCarro, imgAutocarro, imgBicicleta;
 let imgSemaforoVermelho, imgSemaforoVerde, imgEstrada;
 
-// Áudios do jogo
 let somClique, somOndaVerde, somAmbiente, musicaFundo;
 
-// Variáveis Ecológicas e Dificuldade
 let pontosCO2 = 0;
 let nivelPoluicao = 0;
 let maxPoluicao = 100;
 let motivoGameOver = "";
 
 function preload() {
-  // Imagens
   imgCarro = loadImage('assets/imagens/carro.png');
   imgAutocarro = loadImage('assets/imagens/autocarro.png');
   imgBicicleta = loadImage('assets/imagens/bicicleta.png');
@@ -26,7 +22,6 @@ function preload() {
   imgSemaforoVerde = loadImage('assets/imagens/semaforo_verde.png');
   imgEstrada = loadImage('assets/imagens/estrada.png');
 
-  // Carregar Sons da pasta assets/audios/
   soundFormats('mp3');
   somClique = loadSound('assets/audios/clique_semaforo.mp3');
   somOndaVerde = loadSound('assets/audios/onda_verde.mp3');
@@ -38,13 +33,11 @@ function setup() {
   createCanvas(800, 600);
   audioManager = new AudioManager();
 
-  // Semáforos nos cantos dos passeios
   semaforos.push(new Semaforo(310, 150, 'V')); 
   semaforos.push(new Semaforo(490, 450, 'V')); 
   semaforos.push(new Semaforo(550, 210, 'H')); 
   semaforos.push(new Semaforo(250, 390, 'H')); 
 
-  // Ajuste de volumes padrão
   if (musicaFundo) musicaFundo.setVolume(0.25);
   if (somAmbiente) somAmbiente.setVolume(0.20);
   if (somClique) somClique.setVolume(0.50);
@@ -69,9 +62,6 @@ function draw() {
   desenhaRodape();
 }
 
-// ==========================================
-// ECRÃ INICIAL — REGRAS E CALIBRAÇÃO
-// ==========================================
 function desenhaInicio() {
   if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
@@ -146,15 +136,11 @@ function desenhaInicio() {
   pop();
 }
 
-// ==========================================
-// ECRÃ DE JOGO — PAINEL E METRICAS
-// ==========================================
 function desenhaJogo() {
   audioManager.atualizar();
 
   if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
-  // Gestão da Música de Fundo e Ruído Urbano em Loop
   if (musicaFundo && musicaFundo.isLoaded() && !musicaFundo.isPlaying()) {
     musicaFundo.loop();
   }
@@ -162,14 +148,12 @@ function desenhaJogo() {
     somAmbiente.loop();
   }
 
-  // Som do Efeito Onda Verde (Toca apenas quando a Onda Verde é ativada)
   if (audioManager.ondaVerdeAtiva) {
     if (somOndaVerde && somOndaVerde.isLoaded() && !somOndaVerde.isPlaying()) {
       somOndaVerde.play();
     }
   }
 
-  // Dificuldade progressiva
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
 
   if (millis() - tempoUltimoVeiculo > intervaloGeracao) {
@@ -221,16 +205,12 @@ function desenhaJogo() {
   }
 }
 
-// Parar sons de fundo quando o jogo termina
 function pararSonsBackground() {
   if (musicaFundo && musicaFundo.isPlaying()) musicaFundo.stop();
   if (somAmbiente && somAmbiente.isPlaying()) somAmbiente.stop();
   if (somOndaVerde && somOndaVerde.isPlaying()) somOndaVerde.stop();
 }
 
-// ==========================================
-// HUD DE JOGO
-// ==========================================
 function desenhaPainelEcologico() {
   push();
   rectMode(CORNER);
@@ -297,9 +277,6 @@ function desenhaPainelEcologico() {
   pop();
 }
 
-// ==========================================
-// ECRÃ DE GAME OVER / SCORE FINAL
-// ==========================================
 function desenhaFim() {
   if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
@@ -345,9 +322,6 @@ function desenhaFim() {
   pop();
 }
 
-// ==========================================
-// RODAPÉ FIXO
-// ==========================================
 function desenhaRodape() {
   push();
   fill(15, 23, 42);
@@ -375,7 +349,6 @@ function mousePressed() {
     for (let s of semaforos) {
       if (s.foiClicado(mouseX, mouseY)) {
         s.mudar();
-        // Tocar som de clique ao alterar o semáforo
         if (somClique && somClique.isLoaded()) {
           somClique.play();
         }
