@@ -36,7 +36,7 @@ function setup() {
 }
 
 function draw() {
-  background(40);
+  background(25);
 
   switch (estado) {
     case 0:
@@ -53,34 +53,95 @@ function draw() {
   desenhaRodape();
 }
 
+// ==========================================
+// ECRÃ INICIAL — REGRAS E CALIBRAÇÃO
+// ==========================================
 function desenhaInicio() {
+  if (imgEstrada) image(imgEstrada, 0, 0, width, height);
+
+  push();
+  // Card Central Translúcido
+  rectMode(CENTER);
+  fill(15, 23, 42, 220);
+  stroke(51, 65, 85);
+  strokeWeight(2);
+  rect(width / 2, height / 2 - 15, 680, 470, 16);
+
+  // Título
   textAlign(CENTER, CENTER);
-  fill(255);
-  textSize(32);
-  text("ECO-TRAFFIC CONTROL", width / 2, 150);
-  
+  noStroke();
+  fill(46, 204, 113);
+  textSize(34);
+  textStyle(BOLD);
+  text("ECO-TRAFFIC CONTROL", width / 2, 90);
+
+  fill(148, 163, 184);
+  textSize(13);
+  textStyle(NORMAL);
+  text("Gestão Inteligente de Tráfego Urbano Sustentável", width / 2, 120);
+
+  // Painel de Regras e Controlos
+  fill(30, 41, 59, 180);
+  stroke(71, 85, 105);
+  rect(width / 2, 230, 620, 160, 10);
+
+  noStroke();
+  fill(226, 232, 240);
+  textSize(15);
+  textStyle(BOLD);
+  textAlign(LEFT, TOP);
+  text("COMO JOGAR & REGRAS:", width / 2 - 290, 165);
+
+  textSize(12);
+  textStyle(NORMAL);
+  fill(203, 213, 225);
+  text("• Clique nos semáforos para alterar entre VERMELHO e VERDE.", width / 2 - 290, 190);
+  text("• Evite acidentes: veículos em vias cruzadas entram em colisão física.", width / 2 - 290, 210);
+  text("• Controle a poluição: carros parados ao ralenti no vermelho geram emissões nocivas.", width / 2 - 290, 230);
+  text("• Sopre no Microfone para ativar a ONDA VERDE (Acelera tráfego e duplica CO₂ Evitado).", width / 2 - 290, 250);
+  text("• Priorize Transportes Eco (Autocarros Elétricos e Bicicletas) para máxima pontuação.", width / 2 - 290, 270);
+
+  // Status do Microfone e Botão de Início
+  textAlign(CENTER, CENTER);
   if (audioManager.mic && !audioManager.calibrado) {
     audioManager.calibrar();
     fill(241, 196, 15);
-    textSize(16);
-    text("A calibrar ruído ambiente... Por favor faça silêncio", width / 2, 280);
+    textSize(15);
+    text("A calibrar ruído ambiente... Por favor faça silêncio", width / 2, 350);
   } else if (audioManager.calibrado) {
     fill(46, 204, 113);
-    textSize(16);
-    text("Microfone Calibrado!", width / 2, 260);
-    fill(180);
-    text("Pressiona ENTER para começar", width / 2, 310);
+    textSize(15);
+    textStyle(BOLD);
+    text("Microfone Calibrado e Pronto!", width / 2, 340);
+
+    // Botão de Start
+    fill(46, 204, 113);
+    rect(width / 2, 395, 340, 45, 8);
+    fill(15, 23, 42);
+    textSize(15);
+    text("PRESSIONE ENTER PARA COMEÇAR", width / 2, 395);
   } else {
-    textSize(16);
-    fill(180);
-    text("Clica no ecrã para ativar o Microfone", width / 2, 300);
+    fill(239, 68, 68);
+    textSize(14);
+    text("Microfone Desativado", width / 2, 340);
+
+    fill(59, 130, 246);
+    rect(width / 2, 395, 360, 45, 8);
+    fill(255);
+    textSize(14);
+    textStyle(BOLD);
+    text("CLIQUE NO ECRÃ PARA ATIVAR ÁUDIO", width / 2, 395);
   }
+  pop();
 }
 
+// ==========================================
+// ECRÃ DE JOGO — PAINEL E METRICAS
+// ==========================================
 function desenhaJogo() {
   audioManager.atualizar();
 
-  image(imgEstrada, 0, 0, width, height);
+  if (imgEstrada) image(imgEstrada, 0, 0, width, height);
 
   // DIFICULDADE PROGRESSIVA
   let intervaloGeracao = max(600, 2000 - floor(pontosCO2 / 100) * 150);
@@ -107,12 +168,12 @@ function desenhaJogo() {
     for (let j = i - 1; j >= 0; j--) {
       let outro = veiculos[j];
       if (v.origem !== outro.origem && v.colideCom(outro)) {
-        motivoGameOver = "ACIDENTE NO CRUZAMENTO!";
+        motivoGameOver = "COLISÃO GRAVE NO CRUZAMENTO!";
         estado = 2;
       }
     }
 
-    // Pontuação atribuída ao sair do ecrã com sucesso
+    // Pontuação atribuída ao sair do ecrã
     if (v.removido) {
       let multiplicador = audioManager.ondaVerdeAtiva ? 2 : 1; 
       
@@ -124,76 +185,166 @@ function desenhaJogo() {
     }
   }
 
-  // Semáforos
+  // Desenhar Semáforos
   for (let s of semaforos) {
     s.desenhar();
   }
 
-  // Interface de utilizador
+  // Interface do Jogo
   audioManager.desenharBarras();
   desenhaPainelEcologico();
 
   // Fim de jogo por poluição excessiva
   if (nivelPoluicao >= maxPoluicao) {
-    motivoGameOver = "A CIDADE FICOU DEMASIADO POLUÍDA!";
+    motivoGameOver = "A CIDADE ATINGIU NÍVEIS CRÍTICOS DE POLUIÇÃO!";
     estado = 2;
   }
 }
 
+// ==========================================
+// HUD DE JOGO (ECO-METRICAS & ONDA VERDE)
+// ==========================================
 function desenhaPainelEcologico() {
   push();
   rectMode(CORNER);
   
-  fill(30, 200);
-  rect(width - 220, 20, 200, 45, 6);
-  fill(46, 204, 113);
-  textSize(14);
-  textAlign(LEFT, CENTER);
-  text("CO₂ Evitado: " + pontosCO2 + " g", width - 205, 42);
+  // Card CO2 Evitado
+  fill(15, 23, 42, 210);
+  stroke(51, 65, 85);
+  strokeWeight(1.5);
+  rect(width - 230, 15, 215, 50, 8);
 
-  fill(30);
-  rect(width - 220, 75, 200, 15, 4);
-  fill(231, 76, 60);
-  rect(width - 220, 75, map(nivelPoluicao, 0, maxPoluicao, 0, 200, true), 15, 4);
-  
-  fill(255);
+  noStroke();
+  fill(46, 204, 113);
   textSize(11);
-  textAlign(LEFT, BOTTOM);
-  text("POLUIÇÃO DA CIDADE", width - 220, 71);
+  textStyle(BOLD);
+  textAlign(LEFT, TOP);
+  text("PONTUAÇÃO ECOLÓGICA", width - 218, 22);
+
+  fill(255);
+  textSize(16);
+  text(pontosCO2 + " g", width - 218, 38);
+
+  fill(148, 163, 184);
+  textSize(10);
+  textStyle(NORMAL);
+  text("CO₂ Evitado", width - 130, 42);
+
+  // Card Barra de Poluição
+  fill(15, 23, 42, 210);
+  stroke(51, 65, 85);
+  strokeWeight(1.5);
+  rect(width - 230, 72, 215, 42, 8);
+
+  noStroke();
+  fill(226, 232, 240);
+  textSize(10);
+  textStyle(BOLD);
+  text("POLUIÇÃO URBANA", width - 218, 78);
+
+  // Fundo da barra
+  fill(30, 41, 59);
+  rect(width - 218, 93, 190, 10, 4);
+
+  // Preenchimento com transição de cor (Verde -> Amarelo -> Vermelho)
+  let percentual = constrain(nivelPoluicao / maxPoluicao, 0, 1);
+  if (percentual < 0.5) {
+    fill(46, 204, 113);
+  } else if (percentual < 0.8) {
+    fill(241, 196, 15);
+  } else {
+    fill(231, 76, 60);
+  }
+  rect(width - 218, 93, 190 * percentual, 10, 4);
+
+  // Banner Alerta Onda Verde Ativa
+  if (audioManager.ondaVerdeAtiva) {
+    rectMode(CENTER);
+    fill(46, 204, 113, 230);
+    stroke(255);
+    strokeWeight(2);
+    rect(width / 2, 35, 320, 35, 20);
+
+    noStroke();
+    fill(15, 23, 42);
+    textSize(14);
+    textStyle(BOLD);
+    textAlign(CENTER, CENTER);
+    text("ONDA VERDE ATIVA (2X BÓNUS)", width / 2, 35);
+  }
   pop();
 }
 
+// ==========================================
+// ECRÃ DE GAME OVER / SCORE FINAL
+// ==========================================
 function desenhaFim() {
+  if (imgEstrada) image(imgEstrada, 0, 0, width, height);
+
+  push();
+  rectMode(CENTER);
+  fill(15, 23, 42, 230);
+  stroke(239, 68, 68);
+  strokeWeight(2);
+  rect(width / 2, height / 2, 580, 380, 16);
+
+  // Título Game Over
   textAlign(CENTER, CENTER);
-  fill(230, 80, 80);
-  textSize(36);
-  text("GAME OVER", width / 2, 180);
+  noStroke();
+  fill(239, 68, 68);
+  textSize(32);
+  textStyle(BOLD);
+  text("SIMULAÇÃO TERMINADA", width / 2, 140);
 
-  fill(255);
-  textSize(18);
-  text(motivoGameOver, width / 2, 230);
-  
+  // Motivo da paragem
+  fill(226, 232, 240);
+  textSize(14);
+  textStyle(NORMAL);
+  text(motivoGameOver, width / 2, 180);
+
+  // Painel de Resultados
+  fill(30, 41, 59, 200);
+  stroke(51, 65, 85);
+  rect(width / 2, 260, 480, 90, 10);
+
+  noStroke();
+  fill(148, 163, 184);
+  textSize(12);
+  text("TOTAL DE CO₂ EVITADO", width / 2, 235);
+
   fill(46, 204, 113);
-  textSize(22);
-  text("Total de CO₂ Evitado: " + pontosCO2 + " g", width / 2, 280);
+  textSize(36);
+  textStyle(BOLD);
+  text(pontosCO2 + " g", width / 2, 275);
 
-  fill(180);
-  textSize(16);
-  text("Pressiona ENTER para Reiniciar", width / 2, 350);
+  // Botão Reiniciar
+  fill(46, 204, 113);
+  rect(width / 2, 350, 320, 42, 8);
+  fill(15, 23, 42);
+  textSize(14);
+  textStyle(BOLD);
+  text("REINICIAR (PRESSIONE ENTER)", width / 2, 350);
+  pop();
 }
 
+// ==========================================
+// RODAPÉ FIXO
+// ==========================================
 function desenhaRodape() {
-  fill(20);
+  push();
+  fill(15, 23, 42);
   rectMode(CORNER);
-  rect(0, height - 30, width, 30);
+  noStroke();
+  rect(0, height - 28, width, 28);
 
-  fill(255);
-  textSize(12);
+  fill(148, 163, 184);
+  textSize(11);
   textAlign(LEFT, CENTER);
-  text("Sustainable Urban Mobility", 15, height - 15);
+  text("ECO-TRAFFIC CONTROL | Mobilidade Urbana Sustentável", 15, height - 14);
 
   textAlign(RIGHT, CENTER);
-  text("Eduardo Oliveira, 33137, ECGM", width - 15, height - 15);
+  text("Eduardo Oliveira (33137) | ECGM", width - 15, height - 14);
+  pop();
 }
 
 function mousePressed() {
@@ -218,7 +369,7 @@ function keyPressed() {
     pontosCO2 = 0;
     nivelPoluicao = 0;
   } else if (estado === 1 && (key === 'f' || key === 'F')) {
-    motivoGameOver = "SIMULAÇÃO ENCERRADA";
+    motivoGameOver = "SIMULAÇÃO ENCERRADA PELO UTILIZADOR";
     estado = 2;
   } else if (estado === 2 && keyCode === ENTER) {
     estado = 0;
