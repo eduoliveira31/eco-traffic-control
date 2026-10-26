@@ -100,7 +100,7 @@ function desenhaInicio() {
   fill(203, 213, 225);
   text("• Clique nos semáforos para alterar entre VERMELHO e VERDE.", width / 2 - 290, 190);
   text("• Evite acidentes: veículos em vias cruzadas entram em colisão física.", width / 2 - 290, 210);
-  text("• Controle a poluição: carros parados ao ralenti no vermelho geram emissões nocivas.", width / 2 - 290, 230);
+  text("• Controle a poluição: carros parados no vermelho geram emissões nocivas.", width / 2 - 290, 230);
   text("• Sopre no Microfone para ativar a ONDA VERDE (Acelera tráfego e duplica CO₂ Evitado).", width / 2 - 290, 250);
   text("• Priorize Transportes Eco (Autocarros Elétricos e Bicicletas) para máxima pontuação.", width / 2 - 290, 270);
 

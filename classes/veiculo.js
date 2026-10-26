@@ -36,13 +36,13 @@ class Veiculo {
     if (this.tipo === 'ECO-BUS') {
       img = imgAutocarro;
       escala = 0.12;
-      margemLargura = 0.92;     
-      margemComprimento = 1.12; 
+      margemLargura = 1.00;     
+      margemComprimento = 2.00; 
     } else if (this.tipo === 'BIKE') {
       img = imgBicicleta;
       escala = 0.08;
-      margemLargura = 0.85;
-      margemComprimento = 1.05;
+      margemLargura = 0.25;
+      margemComprimento = 0.95;
     }
     
     let largImg = (img && img.width > 0) ? (img.width * escala) * margemLargura : 20;
@@ -100,7 +100,10 @@ class Veiculo {
           let metadeEu = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimEsta.h / 2 : dimEsta.w / 2;
           let metadeOutro = (this.origem === 'NORTE' || this.origem === 'SUL') ? dimOutra.h / 2 : dimOutra.w / 2;
 
-          let folga = 35; 
+          let folga = 25 + (metadeEu + metadeOutro) * 0.5;
+          if (outro.tipo === 'ECO-BUS') {
+            folga += 35;
+          } 
 
           if (this.origem === 'NORTE' && outro.y > this.y) {
             let minhaFrente = this.y + metadeEu;
@@ -160,7 +163,6 @@ class Veiculo {
     }
 
     pop();
-
   }
 
   colideCom(outro) {
